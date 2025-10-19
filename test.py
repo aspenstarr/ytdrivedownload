@@ -10,8 +10,6 @@ chrome_options = Options()
 chrome_options.binary_location = chrome_binary
 chrome_options.add_argument("--headless=new")
 chrome_options.add_argument("--no-sandbox")
-# DO NOT add --user-data-dir
-# DO NOT add other customization.
 
 service = Service(chromedriver_path)
 driver = webdriver.Chrome(service=service, options=chrome_options)
