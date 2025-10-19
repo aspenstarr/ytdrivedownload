@@ -17,16 +17,17 @@ import json
 
 DOWNLOAD_RECORD_FILE = "downloaded.json"
 
+
 def load_downloaded_ids():
     if not os.path.exists(DOWNLOAD_RECORD_FILE):
         return set()
     with open(DOWNLOAD_RECORD_FILE, "r") as f:
         return set(json.load(f))
 
+
 def save_downloaded_ids(ids):
     with open(DOWNLOAD_RECORD_FILE, "w") as f:
         json.dump(sorted(list(ids)), f, indent=2)
-
 
 
 # Get video urls
@@ -47,21 +48,14 @@ def get_video_urls(channel_url):
             print(f"{i+1}. {entry.get('title')}")
         video_urls = [entry['url'] for entry in entries if 'url' in entry]
 
-  
     return video_urls
 
 
 # Get pinned comments
 
 def get_pinned_comment(video_url, headless=False):
-   from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import TimeoutException, NoSuchElementException
-import time
+    from selenium import webdriver
+
 
 def get_pinned_comment(video_url, headless=True):
     chrome_options = Options()
@@ -94,14 +88,16 @@ def get_pinned_comment(video_url, headless=True):
             time.sleep(1)
 
         # Find all visible comment threads
-        threads = driver.find_elements(By.XPATH, "//ytd-comment-thread-renderer")
+        threads = driver.find_elements(
+            By.XPATH, "//ytd-comment-thread-renderer")
 
         for i, thread in enumerate(threads):
             try:
                 # Check if this thread has a pinned badge
-                badge = thread.find_element(By.XPATH, ".//ytd-pinned-comment-badge-renderer")
+                badge = thread.find_element(
+                    By.XPATH, ".//ytd-pinned-comment-badge-renderer")
                 text = thread.find_element(By.ID, "content-text").text
-                print(f"✅ Found pinned comment in thread {i}")
+                print(f"Found pinned comment in thread {i}")
                 return text
             except NoSuchElementException:
                 continue
@@ -166,21 +162,21 @@ def download_drive_link(url, output_folder="downloads"):
 def main(channel_url):
     print(f"Fetching video URLs from channel: {channel_url}")
     video_urls = get_video_urls(channel_url)
-    print(f" Found {len(video_urls)} videos.")
-    
-    
+    print(f"Found {len(video_urls)} videos.")
+
     downloaded_ids = load_downloaded_ids()
     newly_downloaded = set()
 
     for video_url in video_urls:
-        full_url = video_url if video_url.startswith("http") else f"https://www.youtube.com/watch?v={video_url}"
+        full_url = video_url if video_url.startswith(
+            "http") else f"https://www.youtube.com/watch?v={video_url}"
 
-        print(f" Processing video: {full_url}")
-        
+        print(f"Processing video: {full_url}")
+
         video_id = full_url.split("v=")[-1].split("&")[0]
-        
+
         if video_id in downloaded_ids:
-            print("⏩ Skipping (already processed).")
+            print("Skipping (already processed).")
             continue
 
         pinned_comment = get_pinned_comment(full_url)
@@ -189,27 +185,23 @@ def main(channel_url):
 
         drive_links = extract_drive_links(pinned_comment)
         if not drive_links:
-            print(" No Google Drive links found in pinned comment.")
+            print("No Google Drive links found in pinned comment.")
             continue
 
-        print(f" Found {len(drive_links)} Google Drive link(s):")
+        print(f"Found {len(drive_links)} Google Drive link(s):")
         for link in drive_links:
             print(f" → {link}")
             download_drive_link(link)
             drive_id = get_drive_id(link)
             if drive_id:
                 newly_downloaded.add(drive_id)
-    
-    
+
     downloaded_ids.update(newly_downloaded)
     save_downloaded_ids(downloaded_ids)
 
 
-
-
 # RUN
-
 if __name__ == "__main__":
-    # Replace with actual channel URL ("/videos" optional)
+    # channel name
     CHANNEL_URL = "https://www.youtube.com/@vazin./videos"
     main(CHANNEL_URL)
